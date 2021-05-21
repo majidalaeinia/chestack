@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "chestack/cmd"
+import "github.com/MajidAlaeinia/chestack/cmd"
 
 func main() {
 	cmd.Execute()
