@@ -15,8 +15,29 @@ limitations under the License.
 */
 package main
 
-import "github.com/MajidAlaeinia/chestack/cmd"
+import (
+	"fmt"
+	"github.com/MajidAlaeinia/chestack/cmd"
+	"github.com/spf13/viper"
+	"os"
+)
 
 func main() {
+	readConfig()
 	cmd.Execute()
+}
+
+func readConfig() {
+	env := "development"
+	if os.Getenv("ENVIRONMENT") == "production" {
+		env = "production"
+	}
+
+	viper.SetConfigName(env)
+	viper.SetConfigType("toml")
+	viper.AddConfigPath("./config")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
 }
