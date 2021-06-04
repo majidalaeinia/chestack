@@ -3,6 +3,7 @@ module github.com/MajidAlaeinia/chestack
 go 1.16
 
 require (
+	github.com/friendsofgo/errors v0.9.2
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-gonic/gin v1.7.1
 	github.com/go-playground/validator/v10 v10.6.1 // indirect
@@ -21,8 +22,9 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/ugorji/go v1.2.6 // indirect
-	github.com/volatiletech/null/v8 v8.1.2 // indirect
-	github.com/volatiletech/sqlboiler/v4 v4.5.0 // indirect
+	github.com/volatiletech/null/v8 v8.1.2
+	github.com/volatiletech/sqlboiler/v4 v4.5.0
+	github.com/volatiletech/strmangle v0.0.1
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
 	golang.org/x/sys v0.0.0-20210603125802-9665404d3644 // indirect
 	golang.org/x/text v0.3.6 // indirect
