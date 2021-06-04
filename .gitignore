@@ -2,3 +2,4 @@
 vendor
 config
 bin
+database/sqlboiler.toml
