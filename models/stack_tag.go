@@ -24,6 +24,8 @@ import (
 // StackTag is an object representing the database table.
 type StackTag struct {
 	ID        uint64    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	StackID   uint64    `boil:"stack_id" json:"stack_id" toml:"stack_id" yaml:"stack_id"`
+	TagID     uint64    `boil:"tag_id" json:"tag_id" toml:"tag_id" yaml:"tag_id"`
 	CreatedAt null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 	UpdatedAt null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 
@@ -33,10 +35,14 @@ type StackTag struct {
 
 var StackTagColumns = struct {
 	ID        string
+	StackID   string
+	TagID     string
 	CreatedAt string
 	UpdatedAt string
 }{
 	ID:        "id",
+	StackID:   "stack_id",
+	TagID:     "tag_id",
 	CreatedAt: "created_at",
 	UpdatedAt: "updated_at",
 }
@@ -45,20 +51,31 @@ var StackTagColumns = struct {
 
 var StackTagWhere = struct {
 	ID        whereHelperuint64
+	StackID   whereHelperuint64
+	TagID     whereHelperuint64
 	CreatedAt whereHelpernull_Time
 	UpdatedAt whereHelpernull_Time
 }{
 	ID:        whereHelperuint64{field: "`stack_tag`.`id`"},
+	StackID:   whereHelperuint64{field: "`stack_tag`.`stack_id`"},
+	TagID:     whereHelperuint64{field: "`stack_tag`.`tag_id`"},
 	CreatedAt: whereHelpernull_Time{field: "`stack_tag`.`created_at`"},
 	UpdatedAt: whereHelpernull_Time{field: "`stack_tag`.`updated_at`"},
 }
 
 // StackTagRels is where relationship names are stored.
 var StackTagRels = struct {
-}{}
+	Stack string
+	Tag   string
+}{
+	Stack: "Stack",
+	Tag:   "Tag",
+}
 
 // stackTagR is where relationships are stored.
 type stackTagR struct {
+	Stack *Stack `boil:"Stack" json:"Stack" toml:"Stack" yaml:"Stack"`
+	Tag   *Tag   `boil:"Tag" json:"Tag" toml:"Tag" yaml:"Tag"`
 }
 
 // NewStruct creates a new relationship struct
@@ -70,8 +87,8 @@ func (*stackTagR) NewStruct() *stackTagR {
 type stackTagL struct{}
 
 var (
-	stackTagAllColumns            = []string{"id", "created_at", "updated_at"}
-	stackTagColumnsWithoutDefault = []string{"created_at", "updated_at"}
+	stackTagAllColumns            = []string{"id", "stack_id", "tag_id", "created_at", "updated_at"}
+	stackTagColumnsWithoutDefault = []string{"stack_id", "tag_id", "created_at", "updated_at"}
 	stackTagColumnsWithDefault    = []string{"id"}
 	stackTagPrimaryKeyColumns     = []string{"id"}
 )
@@ -333,6 +350,350 @@ func (q stackTagQuery) Exists(exec boil.Executor) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+// Stack pointed to by the foreign key.
+func (o *StackTag) Stack(mods ...qm.QueryMod) stackQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`id` = ?", o.StackID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Stacks(queryMods...)
+	queries.SetFrom(query.Query, "`stacks`")
+
+	return query
+}
+
+// Tag pointed to by the foreign key.
+func (o *StackTag) Tag(mods ...qm.QueryMod) tagQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`id` = ?", o.TagID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Tags(queryMods...)
+	queries.SetFrom(query.Query, "`tags`")
+
+	return query
+}
+
+// LoadStack allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (stackTagL) LoadStack(e boil.Executor, singular bool, maybeStackTag interface{}, mods queries.Applicator) error {
+	var slice []*StackTag
+	var object *StackTag
+
+	if singular {
+		object = maybeStackTag.(*StackTag)
+	} else {
+		slice = *maybeStackTag.(*[]*StackTag)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &stackTagR{}
+		}
+		args = append(args, object.StackID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &stackTagR{}
+			}
+
+			for _, a := range args {
+				if a == obj.StackID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.StackID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`stacks`),
+		qm.WhereIn(`stacks.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Stack")
+	}
+
+	var resultSlice []*Stack
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Stack")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for stacks")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stacks")
+	}
+
+	if len(stackTagAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Stack = foreign
+		if foreign.R == nil {
+			foreign.R = &stackR{}
+		}
+		foreign.R.StackTags = append(foreign.R.StackTags, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.StackID == foreign.ID {
+				local.R.Stack = foreign
+				if foreign.R == nil {
+					foreign.R = &stackR{}
+				}
+				foreign.R.StackTags = append(foreign.R.StackTags, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadTag allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (stackTagL) LoadTag(e boil.Executor, singular bool, maybeStackTag interface{}, mods queries.Applicator) error {
+	var slice []*StackTag
+	var object *StackTag
+
+	if singular {
+		object = maybeStackTag.(*StackTag)
+	} else {
+		slice = *maybeStackTag.(*[]*StackTag)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &stackTagR{}
+		}
+		args = append(args, object.TagID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &stackTagR{}
+			}
+
+			for _, a := range args {
+				if a == obj.TagID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.TagID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`tags`),
+		qm.WhereIn(`tags.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Tag")
+	}
+
+	var resultSlice []*Tag
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Tag")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for tags")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for tags")
+	}
+
+	if len(stackTagAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Tag = foreign
+		if foreign.R == nil {
+			foreign.R = &tagR{}
+		}
+		foreign.R.StackTags = append(foreign.R.StackTags, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.TagID == foreign.ID {
+				local.R.Tag = foreign
+				if foreign.R == nil {
+					foreign.R = &tagR{}
+				}
+				foreign.R.StackTags = append(foreign.R.StackTags, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetStackG of the stackTag to the related item.
+// Sets o.R.Stack to related.
+// Adds o to related.R.StackTags.
+// Uses the global database handle.
+func (o *StackTag) SetStackG(insert bool, related *Stack) error {
+	return o.SetStack(boil.GetDB(), insert, related)
+}
+
+// SetStack of the stackTag to the related item.
+// Sets o.R.Stack to related.
+// Adds o to related.R.StackTags.
+func (o *StackTag) SetStack(exec boil.Executor, insert bool, related *Stack) error {
+	var err error
+	if insert {
+		if err = related.Insert(exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `stack_tag` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"stack_id"}),
+		strmangle.WhereClause("`", "`", 0, stackTagPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.DebugMode {
+		fmt.Fprintln(boil.DebugWriter, updateQuery)
+		fmt.Fprintln(boil.DebugWriter, values)
+	}
+	if _, err = exec.Exec(updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.StackID = related.ID
+	if o.R == nil {
+		o.R = &stackTagR{
+			Stack: related,
+		}
+	} else {
+		o.R.Stack = related
+	}
+
+	if related.R == nil {
+		related.R = &stackR{
+			StackTags: StackTagSlice{o},
+		}
+	} else {
+		related.R.StackTags = append(related.R.StackTags, o)
+	}
+
+	return nil
+}
+
+// SetTagG of the stackTag to the related item.
+// Sets o.R.Tag to related.
+// Adds o to related.R.StackTags.
+// Uses the global database handle.
+func (o *StackTag) SetTagG(insert bool, related *Tag) error {
+	return o.SetTag(boil.GetDB(), insert, related)
+}
+
+// SetTag of the stackTag to the related item.
+// Sets o.R.Tag to related.
+// Adds o to related.R.StackTags.
+func (o *StackTag) SetTag(exec boil.Executor, insert bool, related *Tag) error {
+	var err error
+	if insert {
+		if err = related.Insert(exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `stack_tag` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"tag_id"}),
+		strmangle.WhereClause("`", "`", 0, stackTagPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.DebugMode {
+		fmt.Fprintln(boil.DebugWriter, updateQuery)
+		fmt.Fprintln(boil.DebugWriter, values)
+	}
+	if _, err = exec.Exec(updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.TagID = related.ID
+	if o.R == nil {
+		o.R = &stackTagR{
+			Tag: related,
+		}
+	} else {
+		o.R.Tag = related
+	}
+
+	if related.R == nil {
+		related.R = &tagR{
+			StackTags: StackTagSlice{o},
+		}
+	} else {
+		related.R.StackTags = append(related.R.StackTags, o)
+	}
+
+	return nil
 }
 
 // StackTags retrieves all the records using an executor.

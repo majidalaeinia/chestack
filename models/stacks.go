@@ -23,42 +23,123 @@ import (
 
 // Stack is an object representing the database table.
 type Stack struct {
-	ID        uint64    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	CreatedAt null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
+	ID           uint64      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Name         string      `boil:"name" json:"name" toml:"name" yaml:"name"`
+	Creators     null.JSON   `boil:"creators" json:"creators,omitempty" toml:"creators" yaml:"creators,omitempty"`
+	Website      null.String `boil:"website" json:"website,omitempty" toml:"website" yaml:"website,omitempty"`
+	Logo         null.String `boil:"logo" json:"logo,omitempty" toml:"logo" yaml:"logo,omitempty"`
+	ReleasedAt   time.Time   `boil:"released_at" json:"released_at" toml:"released_at" yaml:"released_at"`
+	DeprecatedAt time.Time   `boil:"deprecated_at" json:"deprecated_at" toml:"deprecated_at" yaml:"deprecated_at"`
+	CreatedAt    null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
+	UpdatedAt    null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 
 	R *stackR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L stackL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var StackColumns = struct {
-	ID        string
-	CreatedAt string
-	UpdatedAt string
+	ID           string
+	Name         string
+	Creators     string
+	Website      string
+	Logo         string
+	ReleasedAt   string
+	DeprecatedAt string
+	CreatedAt    string
+	UpdatedAt    string
 }{
-	ID:        "id",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
+	ID:           "id",
+	Name:         "name",
+	Creators:     "creators",
+	Website:      "website",
+	Logo:         "logo",
+	ReleasedAt:   "released_at",
+	DeprecatedAt: "deprecated_at",
+	CreatedAt:    "created_at",
+	UpdatedAt:    "updated_at",
 }
 
 // Generated where
 
+type whereHelpernull_JSON struct{ field string }
+
+func (w whereHelpernull_JSON) EQ(x null.JSON) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_JSON) NEQ(x null.JSON) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_JSON) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_JSON) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+func (w whereHelpernull_JSON) LT(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_JSON) LTE(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_JSON) GT(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_JSON) GTE(x null.JSON) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+type whereHelpertime_Time struct{ field string }
+
+func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
+}
+func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
 var StackWhere = struct {
-	ID        whereHelperuint64
-	CreatedAt whereHelpernull_Time
-	UpdatedAt whereHelpernull_Time
+	ID           whereHelperuint64
+	Name         whereHelperstring
+	Creators     whereHelpernull_JSON
+	Website      whereHelpernull_String
+	Logo         whereHelpernull_String
+	ReleasedAt   whereHelpertime_Time
+	DeprecatedAt whereHelpertime_Time
+	CreatedAt    whereHelpernull_Time
+	UpdatedAt    whereHelpernull_Time
 }{
-	ID:        whereHelperuint64{field: "`stacks`.`id`"},
-	CreatedAt: whereHelpernull_Time{field: "`stacks`.`created_at`"},
-	UpdatedAt: whereHelpernull_Time{field: "`stacks`.`updated_at`"},
+	ID:           whereHelperuint64{field: "`stacks`.`id`"},
+	Name:         whereHelperstring{field: "`stacks`.`name`"},
+	Creators:     whereHelpernull_JSON{field: "`stacks`.`creators`"},
+	Website:      whereHelpernull_String{field: "`stacks`.`website`"},
+	Logo:         whereHelpernull_String{field: "`stacks`.`logo`"},
+	ReleasedAt:   whereHelpertime_Time{field: "`stacks`.`released_at`"},
+	DeprecatedAt: whereHelpertime_Time{field: "`stacks`.`deprecated_at`"},
+	CreatedAt:    whereHelpernull_Time{field: "`stacks`.`created_at`"},
+	UpdatedAt:    whereHelpernull_Time{field: "`stacks`.`updated_at`"},
 }
 
 // StackRels is where relationship names are stored.
 var StackRels = struct {
-}{}
+	BusinessStacks string
+	StackTags      string
+}{
+	BusinessStacks: "BusinessStacks",
+	StackTags:      "StackTags",
+}
 
 // stackR is where relationships are stored.
 type stackR struct {
+	BusinessStacks BusinessStackSlice `boil:"BusinessStacks" json:"BusinessStacks" toml:"BusinessStacks" yaml:"BusinessStacks"`
+	StackTags      StackTagSlice      `boil:"StackTags" json:"StackTags" toml:"StackTags" yaml:"StackTags"`
 }
 
 // NewStruct creates a new relationship struct
@@ -70,8 +151,8 @@ func (*stackR) NewStruct() *stackR {
 type stackL struct{}
 
 var (
-	stackAllColumns            = []string{"id", "created_at", "updated_at"}
-	stackColumnsWithoutDefault = []string{"created_at", "updated_at"}
+	stackAllColumns            = []string{"id", "name", "creators", "website", "logo", "released_at", "deprecated_at", "created_at", "updated_at"}
+	stackColumnsWithoutDefault = []string{"name", "creators", "website", "logo", "released_at", "deprecated_at", "created_at", "updated_at"}
 	stackColumnsWithDefault    = []string{"id"}
 	stackPrimaryKeyColumns     = []string{"id"}
 )
@@ -333,6 +414,366 @@ func (q stackQuery) Exists(exec boil.Executor) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+// BusinessStacks retrieves all the business_stack's BusinessStacks with an executor.
+func (o *Stack) BusinessStacks(mods ...qm.QueryMod) businessStackQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`business_stack`.`stack_id`=?", o.ID),
+	)
+
+	query := BusinessStacks(queryMods...)
+	queries.SetFrom(query.Query, "`business_stack`")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"`business_stack`.*"})
+	}
+
+	return query
+}
+
+// StackTags retrieves all the stack_tag's StackTags with an executor.
+func (o *Stack) StackTags(mods ...qm.QueryMod) stackTagQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`stack_tag`.`stack_id`=?", o.ID),
+	)
+
+	query := StackTags(queryMods...)
+	queries.SetFrom(query.Query, "`stack_tag`")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"`stack_tag`.*"})
+	}
+
+	return query
+}
+
+// LoadBusinessStacks allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (stackL) LoadBusinessStacks(e boil.Executor, singular bool, maybeStack interface{}, mods queries.Applicator) error {
+	var slice []*Stack
+	var object *Stack
+
+	if singular {
+		object = maybeStack.(*Stack)
+	} else {
+		slice = *maybeStack.(*[]*Stack)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &stackR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &stackR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`business_stack`),
+		qm.WhereIn(`business_stack.stack_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load business_stack")
+	}
+
+	var resultSlice []*BusinessStack
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice business_stack")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on business_stack")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for business_stack")
+	}
+
+	if len(businessStackAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.BusinessStacks = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &businessStackR{}
+			}
+			foreign.R.Stack = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.StackID {
+				local.R.BusinessStacks = append(local.R.BusinessStacks, foreign)
+				if foreign.R == nil {
+					foreign.R = &businessStackR{}
+				}
+				foreign.R.Stack = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadStackTags allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (stackL) LoadStackTags(e boil.Executor, singular bool, maybeStack interface{}, mods queries.Applicator) error {
+	var slice []*Stack
+	var object *Stack
+
+	if singular {
+		object = maybeStack.(*Stack)
+	} else {
+		slice = *maybeStack.(*[]*Stack)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &stackR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &stackR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`stack_tag`),
+		qm.WhereIn(`stack_tag.stack_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load stack_tag")
+	}
+
+	var resultSlice []*StackTag
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice stack_tag")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on stack_tag")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stack_tag")
+	}
+
+	if len(stackTagAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.StackTags = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &stackTagR{}
+			}
+			foreign.R.Stack = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.StackID {
+				local.R.StackTags = append(local.R.StackTags, foreign)
+				if foreign.R == nil {
+					foreign.R = &stackTagR{}
+				}
+				foreign.R.Stack = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddBusinessStacksG adds the given related objects to the existing relationships
+// of the stack, optionally inserting them as new records.
+// Appends related to o.R.BusinessStacks.
+// Sets related.R.Stack appropriately.
+// Uses the global database handle.
+func (o *Stack) AddBusinessStacksG(insert bool, related ...*BusinessStack) error {
+	return o.AddBusinessStacks(boil.GetDB(), insert, related...)
+}
+
+// AddBusinessStacks adds the given related objects to the existing relationships
+// of the stack, optionally inserting them as new records.
+// Appends related to o.R.BusinessStacks.
+// Sets related.R.Stack appropriately.
+func (o *Stack) AddBusinessStacks(exec boil.Executor, insert bool, related ...*BusinessStack) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.StackID = o.ID
+			if err = rel.Insert(exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `business_stack` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"stack_id"}),
+				strmangle.WhereClause("`", "`", 0, businessStackPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.DebugMode {
+				fmt.Fprintln(boil.DebugWriter, updateQuery)
+				fmt.Fprintln(boil.DebugWriter, values)
+			}
+			if _, err = exec.Exec(updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.StackID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &stackR{
+			BusinessStacks: related,
+		}
+	} else {
+		o.R.BusinessStacks = append(o.R.BusinessStacks, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &businessStackR{
+				Stack: o,
+			}
+		} else {
+			rel.R.Stack = o
+		}
+	}
+	return nil
+}
+
+// AddStackTagsG adds the given related objects to the existing relationships
+// of the stack, optionally inserting them as new records.
+// Appends related to o.R.StackTags.
+// Sets related.R.Stack appropriately.
+// Uses the global database handle.
+func (o *Stack) AddStackTagsG(insert bool, related ...*StackTag) error {
+	return o.AddStackTags(boil.GetDB(), insert, related...)
+}
+
+// AddStackTags adds the given related objects to the existing relationships
+// of the stack, optionally inserting them as new records.
+// Appends related to o.R.StackTags.
+// Sets related.R.Stack appropriately.
+func (o *Stack) AddStackTags(exec boil.Executor, insert bool, related ...*StackTag) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.StackID = o.ID
+			if err = rel.Insert(exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `stack_tag` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"stack_id"}),
+				strmangle.WhereClause("`", "`", 0, stackTagPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.DebugMode {
+				fmt.Fprintln(boil.DebugWriter, updateQuery)
+				fmt.Fprintln(boil.DebugWriter, values)
+			}
+			if _, err = exec.Exec(updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.StackID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &stackR{
+			StackTags: related,
+		}
+	} else {
+		o.R.StackTags = append(o.R.StackTags, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &stackTagR{
+				Stack: o,
+			}
+		} else {
+			rel.R.Stack = o
+		}
+	}
+	return nil
 }
 
 // Stacks retrieves all the records using an executor.

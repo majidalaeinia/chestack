@@ -23,42 +23,59 @@ import (
 
 // UserBusiness is an object representing the database table.
 type UserBusiness struct {
-	ID        uint64    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	CreatedAt null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
+	ID         uint64    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID     uint64    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	BusinessID uint64    `boil:"business_id" json:"business_id" toml:"business_id" yaml:"business_id"`
+	CreatedAt  null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
+	UpdatedAt  null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 
 	R *userBusinessR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userBusinessL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserBusinessColumns = struct {
-	ID        string
-	CreatedAt string
-	UpdatedAt string
+	ID         string
+	UserID     string
+	BusinessID string
+	CreatedAt  string
+	UpdatedAt  string
 }{
-	ID:        "id",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
+	ID:         "id",
+	UserID:     "user_id",
+	BusinessID: "business_id",
+	CreatedAt:  "created_at",
+	UpdatedAt:  "updated_at",
 }
 
 // Generated where
 
 var UserBusinessWhere = struct {
-	ID        whereHelperuint64
-	CreatedAt whereHelpernull_Time
-	UpdatedAt whereHelpernull_Time
+	ID         whereHelperuint64
+	UserID     whereHelperuint64
+	BusinessID whereHelperuint64
+	CreatedAt  whereHelpernull_Time
+	UpdatedAt  whereHelpernull_Time
 }{
-	ID:        whereHelperuint64{field: "`user_business`.`id`"},
-	CreatedAt: whereHelpernull_Time{field: "`user_business`.`created_at`"},
-	UpdatedAt: whereHelpernull_Time{field: "`user_business`.`updated_at`"},
+	ID:         whereHelperuint64{field: "`user_business`.`id`"},
+	UserID:     whereHelperuint64{field: "`user_business`.`user_id`"},
+	BusinessID: whereHelperuint64{field: "`user_business`.`business_id`"},
+	CreatedAt:  whereHelpernull_Time{field: "`user_business`.`created_at`"},
+	UpdatedAt:  whereHelpernull_Time{field: "`user_business`.`updated_at`"},
 }
 
 // UserBusinessRels is where relationship names are stored.
 var UserBusinessRels = struct {
-}{}
+	Business string
+	User     string
+}{
+	Business: "Business",
+	User:     "User",
+}
 
 // userBusinessR is where relationships are stored.
 type userBusinessR struct {
+	Business *Business `boil:"Business" json:"Business" toml:"Business" yaml:"Business"`
+	User     *User     `boil:"User" json:"User" toml:"User" yaml:"User"`
 }
 
 // NewStruct creates a new relationship struct
@@ -70,8 +87,8 @@ func (*userBusinessR) NewStruct() *userBusinessR {
 type userBusinessL struct{}
 
 var (
-	userBusinessAllColumns            = []string{"id", "created_at", "updated_at"}
-	userBusinessColumnsWithoutDefault = []string{"created_at", "updated_at"}
+	userBusinessAllColumns            = []string{"id", "user_id", "business_id", "created_at", "updated_at"}
+	userBusinessColumnsWithoutDefault = []string{"user_id", "business_id", "created_at", "updated_at"}
 	userBusinessColumnsWithDefault    = []string{"id"}
 	userBusinessPrimaryKeyColumns     = []string{"id"}
 )
@@ -333,6 +350,350 @@ func (q userBusinessQuery) Exists(exec boil.Executor) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+// Business pointed to by the foreign key.
+func (o *UserBusiness) Business(mods ...qm.QueryMod) businessQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`id` = ?", o.BusinessID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Businesses(queryMods...)
+	queries.SetFrom(query.Query, "`businesses`")
+
+	return query
+}
+
+// User pointed to by the foreign key.
+func (o *UserBusiness) User(mods ...qm.QueryMod) userQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`id` = ?", o.UserID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Users(queryMods...)
+	queries.SetFrom(query.Query, "`users`")
+
+	return query
+}
+
+// LoadBusiness allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (userBusinessL) LoadBusiness(e boil.Executor, singular bool, maybeUserBusiness interface{}, mods queries.Applicator) error {
+	var slice []*UserBusiness
+	var object *UserBusiness
+
+	if singular {
+		object = maybeUserBusiness.(*UserBusiness)
+	} else {
+		slice = *maybeUserBusiness.(*[]*UserBusiness)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &userBusinessR{}
+		}
+		args = append(args, object.BusinessID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userBusinessR{}
+			}
+
+			for _, a := range args {
+				if a == obj.BusinessID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.BusinessID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`businesses`),
+		qm.WhereIn(`businesses.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Business")
+	}
+
+	var resultSlice []*Business
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Business")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for businesses")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for businesses")
+	}
+
+	if len(userBusinessAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Business = foreign
+		if foreign.R == nil {
+			foreign.R = &businessR{}
+		}
+		foreign.R.UserBusinesses = append(foreign.R.UserBusinesses, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.BusinessID == foreign.ID {
+				local.R.Business = foreign
+				if foreign.R == nil {
+					foreign.R = &businessR{}
+				}
+				foreign.R.UserBusinesses = append(foreign.R.UserBusinesses, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadUser allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (userBusinessL) LoadUser(e boil.Executor, singular bool, maybeUserBusiness interface{}, mods queries.Applicator) error {
+	var slice []*UserBusiness
+	var object *UserBusiness
+
+	if singular {
+		object = maybeUserBusiness.(*UserBusiness)
+	} else {
+		slice = *maybeUserBusiness.(*[]*UserBusiness)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &userBusinessR{}
+		}
+		args = append(args, object.UserID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userBusinessR{}
+			}
+
+			for _, a := range args {
+				if a == obj.UserID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.UserID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`users`),
+		qm.WhereIn(`users.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load User")
+	}
+
+	var resultSlice []*User
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice User")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for users")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for users")
+	}
+
+	if len(userBusinessAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.User = foreign
+		if foreign.R == nil {
+			foreign.R = &userR{}
+		}
+		foreign.R.UserBusinesses = append(foreign.R.UserBusinesses, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.UserID == foreign.ID {
+				local.R.User = foreign
+				if foreign.R == nil {
+					foreign.R = &userR{}
+				}
+				foreign.R.UserBusinesses = append(foreign.R.UserBusinesses, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetBusinessG of the userBusiness to the related item.
+// Sets o.R.Business to related.
+// Adds o to related.R.UserBusinesses.
+// Uses the global database handle.
+func (o *UserBusiness) SetBusinessG(insert bool, related *Business) error {
+	return o.SetBusiness(boil.GetDB(), insert, related)
+}
+
+// SetBusiness of the userBusiness to the related item.
+// Sets o.R.Business to related.
+// Adds o to related.R.UserBusinesses.
+func (o *UserBusiness) SetBusiness(exec boil.Executor, insert bool, related *Business) error {
+	var err error
+	if insert {
+		if err = related.Insert(exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `user_business` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"business_id"}),
+		strmangle.WhereClause("`", "`", 0, userBusinessPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.DebugMode {
+		fmt.Fprintln(boil.DebugWriter, updateQuery)
+		fmt.Fprintln(boil.DebugWriter, values)
+	}
+	if _, err = exec.Exec(updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.BusinessID = related.ID
+	if o.R == nil {
+		o.R = &userBusinessR{
+			Business: related,
+		}
+	} else {
+		o.R.Business = related
+	}
+
+	if related.R == nil {
+		related.R = &businessR{
+			UserBusinesses: UserBusinessSlice{o},
+		}
+	} else {
+		related.R.UserBusinesses = append(related.R.UserBusinesses, o)
+	}
+
+	return nil
+}
+
+// SetUserG of the userBusiness to the related item.
+// Sets o.R.User to related.
+// Adds o to related.R.UserBusinesses.
+// Uses the global database handle.
+func (o *UserBusiness) SetUserG(insert bool, related *User) error {
+	return o.SetUser(boil.GetDB(), insert, related)
+}
+
+// SetUser of the userBusiness to the related item.
+// Sets o.R.User to related.
+// Adds o to related.R.UserBusinesses.
+func (o *UserBusiness) SetUser(exec boil.Executor, insert bool, related *User) error {
+	var err error
+	if insert {
+		if err = related.Insert(exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `user_business` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"user_id"}),
+		strmangle.WhereClause("`", "`", 0, userBusinessPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.DebugMode {
+		fmt.Fprintln(boil.DebugWriter, updateQuery)
+		fmt.Fprintln(boil.DebugWriter, values)
+	}
+	if _, err = exec.Exec(updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.UserID = related.ID
+	if o.R == nil {
+		o.R = &userBusinessR{
+			User: related,
+		}
+	} else {
+		o.R.User = related
+	}
+
+	if related.R == nil {
+		related.R = &userR{
+			UserBusinesses: UserBusinessSlice{o},
+		}
+	} else {
+		related.R.UserBusinesses = append(related.R.UserBusinesses, o)
+	}
+
+	return nil
 }
 
 // UserBusinesses retrieves all the records using an executor.

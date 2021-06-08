@@ -23,22 +23,28 @@ import (
 
 // BusinessStack is an object representing the database table.
 type BusinessStack struct {
-	ID        uint64    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	CreatedAt null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
+	ID         uint64    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	BusinessID uint64    `boil:"business_id" json:"business_id" toml:"business_id" yaml:"business_id"`
+	StackID    uint64    `boil:"stack_id" json:"stack_id" toml:"stack_id" yaml:"stack_id"`
+	CreatedAt  null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
+	UpdatedAt  null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 
 	R *businessStackR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L businessStackL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var BusinessStackColumns = struct {
-	ID        string
-	CreatedAt string
-	UpdatedAt string
+	ID         string
+	BusinessID string
+	StackID    string
+	CreatedAt  string
+	UpdatedAt  string
 }{
-	ID:        "id",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
+	ID:         "id",
+	BusinessID: "business_id",
+	StackID:    "stack_id",
+	CreatedAt:  "created_at",
+	UpdatedAt:  "updated_at",
 }
 
 // Generated where
@@ -90,21 +96,32 @@ func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
 }
 
 var BusinessStackWhere = struct {
-	ID        whereHelperuint64
-	CreatedAt whereHelpernull_Time
-	UpdatedAt whereHelpernull_Time
+	ID         whereHelperuint64
+	BusinessID whereHelperuint64
+	StackID    whereHelperuint64
+	CreatedAt  whereHelpernull_Time
+	UpdatedAt  whereHelpernull_Time
 }{
-	ID:        whereHelperuint64{field: "`business_stack`.`id`"},
-	CreatedAt: whereHelpernull_Time{field: "`business_stack`.`created_at`"},
-	UpdatedAt: whereHelpernull_Time{field: "`business_stack`.`updated_at`"},
+	ID:         whereHelperuint64{field: "`business_stack`.`id`"},
+	BusinessID: whereHelperuint64{field: "`business_stack`.`business_id`"},
+	StackID:    whereHelperuint64{field: "`business_stack`.`stack_id`"},
+	CreatedAt:  whereHelpernull_Time{field: "`business_stack`.`created_at`"},
+	UpdatedAt:  whereHelpernull_Time{field: "`business_stack`.`updated_at`"},
 }
 
 // BusinessStackRels is where relationship names are stored.
 var BusinessStackRels = struct {
-}{}
+	Business string
+	Stack    string
+}{
+	Business: "Business",
+	Stack:    "Stack",
+}
 
 // businessStackR is where relationships are stored.
 type businessStackR struct {
+	Business *Business `boil:"Business" json:"Business" toml:"Business" yaml:"Business"`
+	Stack    *Stack    `boil:"Stack" json:"Stack" toml:"Stack" yaml:"Stack"`
 }
 
 // NewStruct creates a new relationship struct
@@ -116,8 +133,8 @@ func (*businessStackR) NewStruct() *businessStackR {
 type businessStackL struct{}
 
 var (
-	businessStackAllColumns            = []string{"id", "created_at", "updated_at"}
-	businessStackColumnsWithoutDefault = []string{"created_at", "updated_at"}
+	businessStackAllColumns            = []string{"id", "business_id", "stack_id", "created_at", "updated_at"}
+	businessStackColumnsWithoutDefault = []string{"business_id", "stack_id", "created_at", "updated_at"}
 	businessStackColumnsWithDefault    = []string{"id"}
 	businessStackPrimaryKeyColumns     = []string{"id"}
 )
@@ -379,6 +396,350 @@ func (q businessStackQuery) Exists(exec boil.Executor) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+// Business pointed to by the foreign key.
+func (o *BusinessStack) Business(mods ...qm.QueryMod) businessQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`id` = ?", o.BusinessID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Businesses(queryMods...)
+	queries.SetFrom(query.Query, "`businesses`")
+
+	return query
+}
+
+// Stack pointed to by the foreign key.
+func (o *BusinessStack) Stack(mods ...qm.QueryMod) stackQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`id` = ?", o.StackID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Stacks(queryMods...)
+	queries.SetFrom(query.Query, "`stacks`")
+
+	return query
+}
+
+// LoadBusiness allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (businessStackL) LoadBusiness(e boil.Executor, singular bool, maybeBusinessStack interface{}, mods queries.Applicator) error {
+	var slice []*BusinessStack
+	var object *BusinessStack
+
+	if singular {
+		object = maybeBusinessStack.(*BusinessStack)
+	} else {
+		slice = *maybeBusinessStack.(*[]*BusinessStack)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &businessStackR{}
+		}
+		args = append(args, object.BusinessID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &businessStackR{}
+			}
+
+			for _, a := range args {
+				if a == obj.BusinessID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.BusinessID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`businesses`),
+		qm.WhereIn(`businesses.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Business")
+	}
+
+	var resultSlice []*Business
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Business")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for businesses")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for businesses")
+	}
+
+	if len(businessStackAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Business = foreign
+		if foreign.R == nil {
+			foreign.R = &businessR{}
+		}
+		foreign.R.BusinessStacks = append(foreign.R.BusinessStacks, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.BusinessID == foreign.ID {
+				local.R.Business = foreign
+				if foreign.R == nil {
+					foreign.R = &businessR{}
+				}
+				foreign.R.BusinessStacks = append(foreign.R.BusinessStacks, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadStack allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (businessStackL) LoadStack(e boil.Executor, singular bool, maybeBusinessStack interface{}, mods queries.Applicator) error {
+	var slice []*BusinessStack
+	var object *BusinessStack
+
+	if singular {
+		object = maybeBusinessStack.(*BusinessStack)
+	} else {
+		slice = *maybeBusinessStack.(*[]*BusinessStack)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &businessStackR{}
+		}
+		args = append(args, object.StackID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &businessStackR{}
+			}
+
+			for _, a := range args {
+				if a == obj.StackID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.StackID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`stacks`),
+		qm.WhereIn(`stacks.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Stack")
+	}
+
+	var resultSlice []*Stack
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Stack")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for stacks")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stacks")
+	}
+
+	if len(businessStackAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Stack = foreign
+		if foreign.R == nil {
+			foreign.R = &stackR{}
+		}
+		foreign.R.BusinessStacks = append(foreign.R.BusinessStacks, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.StackID == foreign.ID {
+				local.R.Stack = foreign
+				if foreign.R == nil {
+					foreign.R = &stackR{}
+				}
+				foreign.R.BusinessStacks = append(foreign.R.BusinessStacks, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetBusinessG of the businessStack to the related item.
+// Sets o.R.Business to related.
+// Adds o to related.R.BusinessStacks.
+// Uses the global database handle.
+func (o *BusinessStack) SetBusinessG(insert bool, related *Business) error {
+	return o.SetBusiness(boil.GetDB(), insert, related)
+}
+
+// SetBusiness of the businessStack to the related item.
+// Sets o.R.Business to related.
+// Adds o to related.R.BusinessStacks.
+func (o *BusinessStack) SetBusiness(exec boil.Executor, insert bool, related *Business) error {
+	var err error
+	if insert {
+		if err = related.Insert(exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `business_stack` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"business_id"}),
+		strmangle.WhereClause("`", "`", 0, businessStackPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.DebugMode {
+		fmt.Fprintln(boil.DebugWriter, updateQuery)
+		fmt.Fprintln(boil.DebugWriter, values)
+	}
+	if _, err = exec.Exec(updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.BusinessID = related.ID
+	if o.R == nil {
+		o.R = &businessStackR{
+			Business: related,
+		}
+	} else {
+		o.R.Business = related
+	}
+
+	if related.R == nil {
+		related.R = &businessR{
+			BusinessStacks: BusinessStackSlice{o},
+		}
+	} else {
+		related.R.BusinessStacks = append(related.R.BusinessStacks, o)
+	}
+
+	return nil
+}
+
+// SetStackG of the businessStack to the related item.
+// Sets o.R.Stack to related.
+// Adds o to related.R.BusinessStacks.
+// Uses the global database handle.
+func (o *BusinessStack) SetStackG(insert bool, related *Stack) error {
+	return o.SetStack(boil.GetDB(), insert, related)
+}
+
+// SetStack of the businessStack to the related item.
+// Sets o.R.Stack to related.
+// Adds o to related.R.BusinessStacks.
+func (o *BusinessStack) SetStack(exec boil.Executor, insert bool, related *Stack) error {
+	var err error
+	if insert {
+		if err = related.Insert(exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `business_stack` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"stack_id"}),
+		strmangle.WhereClause("`", "`", 0, businessStackPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.DebugMode {
+		fmt.Fprintln(boil.DebugWriter, updateQuery)
+		fmt.Fprintln(boil.DebugWriter, values)
+	}
+	if _, err = exec.Exec(updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.StackID = related.ID
+	if o.R == nil {
+		o.R = &businessStackR{
+			Stack: related,
+		}
+	} else {
+		o.R.Stack = related
+	}
+
+	if related.R == nil {
+		related.R = &stackR{
+			BusinessStacks: BusinessStackSlice{o},
+		}
+	} else {
+		related.R.BusinessStacks = append(related.R.BusinessStacks, o)
+	}
+
+	return nil
 }
 
 // BusinessStacks retrieves all the records using an executor.

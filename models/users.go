@@ -26,6 +26,7 @@ type User struct {
 	ID              uint64      `boil:"id" json:"id" toml:"id" yaml:"id"`
 	Name            string      `boil:"name" json:"name" toml:"name" yaml:"name"`
 	Email           string      `boil:"email" json:"email" toml:"email" yaml:"email"`
+	Mobile          string      `boil:"mobile" json:"mobile" toml:"mobile" yaml:"mobile"`
 	EmailVerifiedAt null.Time   `boil:"email_verified_at" json:"email_verified_at,omitempty" toml:"email_verified_at" yaml:"email_verified_at,omitempty"`
 	Password        string      `boil:"password" json:"password" toml:"password" yaml:"password"`
 	RememberToken   null.String `boil:"remember_token" json:"remember_token,omitempty" toml:"remember_token" yaml:"remember_token,omitempty"`
@@ -40,6 +41,7 @@ var UserColumns = struct {
 	ID              string
 	Name            string
 	Email           string
+	Mobile          string
 	EmailVerifiedAt string
 	Password        string
 	RememberToken   string
@@ -49,6 +51,7 @@ var UserColumns = struct {
 	ID:              "id",
 	Name:            "name",
 	Email:           "email",
+	Mobile:          "mobile",
 	EmailVerifiedAt: "email_verified_at",
 	Password:        "password",
 	RememberToken:   "remember_token",
@@ -58,33 +61,11 @@ var UserColumns = struct {
 
 // Generated where
 
-type whereHelpernull_String struct{ field string }
-
-func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
 var UserWhere = struct {
 	ID              whereHelperuint64
 	Name            whereHelperstring
 	Email           whereHelperstring
+	Mobile          whereHelperstring
 	EmailVerifiedAt whereHelpernull_Time
 	Password        whereHelperstring
 	RememberToken   whereHelpernull_String
@@ -94,6 +75,7 @@ var UserWhere = struct {
 	ID:              whereHelperuint64{field: "`users`.`id`"},
 	Name:            whereHelperstring{field: "`users`.`name`"},
 	Email:           whereHelperstring{field: "`users`.`email`"},
+	Mobile:          whereHelperstring{field: "`users`.`mobile`"},
 	EmailVerifiedAt: whereHelpernull_Time{field: "`users`.`email_verified_at`"},
 	Password:        whereHelperstring{field: "`users`.`password`"},
 	RememberToken:   whereHelpernull_String{field: "`users`.`remember_token`"},
@@ -103,10 +85,14 @@ var UserWhere = struct {
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-}{}
+	UserBusinesses string
+}{
+	UserBusinesses: "UserBusinesses",
+}
 
 // userR is where relationships are stored.
 type userR struct {
+	UserBusinesses UserBusinessSlice `boil:"UserBusinesses" json:"UserBusinesses" toml:"UserBusinesses" yaml:"UserBusinesses"`
 }
 
 // NewStruct creates a new relationship struct
@@ -118,8 +104,8 @@ func (*userR) NewStruct() *userR {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "name", "email", "email_verified_at", "password", "remember_token", "created_at", "updated_at"}
-	userColumnsWithoutDefault = []string{"name", "email", "email_verified_at", "password", "remember_token", "created_at", "updated_at"}
+	userAllColumns            = []string{"id", "name", "email", "mobile", "email_verified_at", "password", "remember_token", "created_at", "updated_at"}
+	userColumnsWithoutDefault = []string{"name", "email", "mobile", "email_verified_at", "password", "remember_token", "created_at", "updated_at"}
 	userColumnsWithDefault    = []string{"id"}
 	userPrimaryKeyColumns     = []string{"id"}
 )
@@ -381,6 +367,186 @@ func (q userQuery) Exists(exec boil.Executor) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+// UserBusinesses retrieves all the user_business's UserBusinesses with an executor.
+func (o *User) UserBusinesses(mods ...qm.QueryMod) userBusinessQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`user_business`.`user_id`=?", o.ID),
+	)
+
+	query := UserBusinesses(queryMods...)
+	queries.SetFrom(query.Query, "`user_business`")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"`user_business`.*"})
+	}
+
+	return query
+}
+
+// LoadUserBusinesses allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadUserBusinesses(e boil.Executor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		object = maybeUser.(*User)
+	} else {
+		slice = *maybeUser.(*[]*User)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`user_business`),
+		qm.WhereIn(`user_business.user_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.Query(e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load user_business")
+	}
+
+	var resultSlice []*UserBusiness
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice user_business")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on user_business")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_business")
+	}
+
+	if len(userBusinessAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.UserBusinesses = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &userBusinessR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.UserBusinesses = append(local.R.UserBusinesses, foreign)
+				if foreign.R == nil {
+					foreign.R = &userBusinessR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddUserBusinessesG adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.UserBusinesses.
+// Sets related.R.User appropriately.
+// Uses the global database handle.
+func (o *User) AddUserBusinessesG(insert bool, related ...*UserBusiness) error {
+	return o.AddUserBusinesses(boil.GetDB(), insert, related...)
+}
+
+// AddUserBusinesses adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.UserBusinesses.
+// Sets related.R.User appropriately.
+func (o *User) AddUserBusinesses(exec boil.Executor, insert bool, related ...*UserBusiness) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `user_business` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"user_id"}),
+				strmangle.WhereClause("`", "`", 0, userBusinessPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.DebugMode {
+				fmt.Fprintln(boil.DebugWriter, updateQuery)
+				fmt.Fprintln(boil.DebugWriter, values)
+			}
+			if _, err = exec.Exec(updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			UserBusinesses: related,
+		}
+	} else {
+		o.R.UserBusinesses = append(o.R.UserBusinesses, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &userBusinessR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
 }
 
 // Users retrieves all the records using an executor.
@@ -691,6 +857,7 @@ func (o *User) UpsertG(updateColumns, insertColumns boil.Columns) error {
 var mySQLUserUniqueColumns = []string{
 	"id",
 	"email",
+	"mobile",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
