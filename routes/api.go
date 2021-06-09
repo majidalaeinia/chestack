@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/MajidAlaeinia/chestack/app/http/controllers"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -11,4 +12,6 @@ func SetRoutes(r *gin.Engine) {
 			"status": "OK",
 		})
 	})
+
+	r.GET("/users/:id", new(controllers.UserController).Show)
 }
