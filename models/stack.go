@@ -116,15 +116,15 @@ var StackWhere = struct {
 	CreatedAt    whereHelpernull_Time
 	UpdatedAt    whereHelpernull_Time
 }{
-	ID:           whereHelperuint64{field: "`stacks`.`id`"},
-	Name:         whereHelperstring{field: "`stacks`.`name`"},
-	Creators:     whereHelpernull_JSON{field: "`stacks`.`creators`"},
-	Website:      whereHelpernull_String{field: "`stacks`.`website`"},
-	Logo:         whereHelpernull_String{field: "`stacks`.`logo`"},
-	ReleasedAt:   whereHelpertime_Time{field: "`stacks`.`released_at`"},
-	DeprecatedAt: whereHelpertime_Time{field: "`stacks`.`deprecated_at`"},
-	CreatedAt:    whereHelpernull_Time{field: "`stacks`.`created_at`"},
-	UpdatedAt:    whereHelpernull_Time{field: "`stacks`.`updated_at`"},
+	ID:           whereHelperuint64{field: "`stack`.`id`"},
+	Name:         whereHelperstring{field: "`stack`.`name`"},
+	Creators:     whereHelpernull_JSON{field: "`stack`.`creators`"},
+	Website:      whereHelpernull_String{field: "`stack`.`website`"},
+	Logo:         whereHelpernull_String{field: "`stack`.`logo`"},
+	ReleasedAt:   whereHelpertime_Time{field: "`stack`.`released_at`"},
+	DeprecatedAt: whereHelpertime_Time{field: "`stack`.`deprecated_at`"},
+	CreatedAt:    whereHelpernull_Time{field: "`stack`.`created_at`"},
+	UpdatedAt:    whereHelpernull_Time{field: "`stack`.`updated_at`"},
 }
 
 // StackRels is where relationship names are stored.
@@ -340,7 +340,7 @@ func (q stackQuery) One(exec boil.Executor) (*Stack, error) {
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for stacks")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for stack")
 	}
 
 	if err := o.doAfterSelectHooks(exec); err != nil {
@@ -389,7 +389,7 @@ func (q stackQuery) Count(exec boil.Executor) (int64, error) {
 
 	err := q.Query.QueryRow(exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count stacks rows")
+		return 0, errors.Wrap(err, "models: failed to count stack rows")
 	}
 
 	return count, nil
@@ -410,7 +410,7 @@ func (q stackQuery) Exists(exec boil.Executor) (bool, error) {
 
 	err := q.Query.QueryRow(exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if stacks exists")
+		return false, errors.Wrap(err, "models: failed to check if stack exists")
 	}
 
 	return count > 0, nil
@@ -778,7 +778,7 @@ func (o *Stack) AddStackTags(exec boil.Executor, insert bool, related ...*StackT
 
 // Stacks retrieves all the records using an executor.
 func Stacks(mods ...qm.QueryMod) stackQuery {
-	mods = append(mods, qm.From("`stacks`"))
+	mods = append(mods, qm.From("`stack`"))
 	return stackQuery{NewQuery(mods...)}
 }
 
@@ -797,7 +797,7 @@ func FindStack(exec boil.Executor, iD uint64, selectCols ...string) (*Stack, err
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `stacks` where `id`=?", sel,
+		"select %s from `stack` where `id`=?", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -807,7 +807,7 @@ func FindStack(exec boil.Executor, iD uint64, selectCols ...string) (*Stack, err
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from stacks")
+		return nil, errors.Wrap(err, "models: unable to select from stack")
 	}
 
 	return stackObj, nil
@@ -822,7 +822,7 @@ func (o *Stack) InsertG(columns boil.Columns) error {
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *Stack) Insert(exec boil.Executor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no stacks provided for insertion")
+		return errors.New("models: no stack provided for insertion")
 	}
 
 	var err error
@@ -863,15 +863,15 @@ func (o *Stack) Insert(exec boil.Executor, columns boil.Columns) error {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `stacks` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `stack` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `stacks` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `stack` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `stacks` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, stackPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `stack` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, stackPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -887,7 +887,7 @@ func (o *Stack) Insert(exec boil.Executor, columns boil.Columns) error {
 	result, err := exec.Exec(cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into stacks")
+		return errors.Wrap(err, "models: unable to insert into stack")
 	}
 
 	var lastID int64
@@ -917,7 +917,7 @@ func (o *Stack) Insert(exec boil.Executor, columns boil.Columns) error {
 	}
 	err = exec.QueryRow(cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for stacks")
+		return errors.Wrap(err, "models: unable to populate default values for stack")
 	}
 
 CacheNoHooks:
@@ -963,10 +963,10 @@ func (o *Stack) Update(exec boil.Executor, columns boil.Columns) (int64, error) 
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update stacks, could not build whitelist")
+			return 0, errors.New("models: unable to update stack, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `stacks` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `stack` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, stackPrimaryKeyColumns),
 		)
@@ -985,12 +985,12 @@ func (o *Stack) Update(exec boil.Executor, columns boil.Columns) (int64, error) 
 	var result sql.Result
 	result, err = exec.Exec(cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update stacks row")
+		return 0, errors.Wrap(err, "models: unable to update stack row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for stacks")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for stack")
 	}
 
 	if !cached {
@@ -1013,12 +1013,12 @@ func (q stackQuery) UpdateAll(exec boil.Executor, cols M) (int64, error) {
 
 	result, err := q.Query.Exec(exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for stacks")
+		return 0, errors.Wrap(err, "models: unable to update all for stack")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for stacks")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for stack")
 	}
 
 	return rowsAff, nil
@@ -1056,7 +1056,7 @@ func (o StackSlice) UpdateAll(exec boil.Executor, cols M) (int64, error) {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `stacks` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `stack` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, stackPrimaryKeyColumns, len(o)))
 
@@ -1089,7 +1089,7 @@ var mySQLStackUniqueColumns = []string{
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *Stack) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no stacks provided for upsert")
+		return errors.New("models: no stack provided for upsert")
 	}
 	currTime := time.Now().In(boil.GetLocation())
 
@@ -1150,13 +1150,13 @@ func (o *Stack) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Col
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("models: unable to upsert stacks, could not build update column list")
+			return errors.New("models: unable to upsert stack, could not build update column list")
 		}
 
 		ret = strmangle.SetComplement(ret, nzUniques)
-		cache.query = buildUpsertQueryMySQL(dialect, "`stacks`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`stack`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `stacks` WHERE %s",
+			"SELECT %s FROM `stack` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -1187,7 +1187,7 @@ func (o *Stack) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Col
 	result, err := exec.Exec(cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert for stacks")
+		return errors.Wrap(err, "models: unable to upsert for stack")
 	}
 
 	var lastID int64
@@ -1210,7 +1210,7 @@ func (o *Stack) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Col
 
 	uniqueMap, err = queries.BindMapping(stackType, stackMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to retrieve unique values for stacks")
+		return errors.Wrap(err, "models: unable to retrieve unique values for stack")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -1220,7 +1220,7 @@ func (o *Stack) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Col
 	}
 	err = exec.QueryRow(cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for stacks")
+		return errors.Wrap(err, "models: unable to populate default values for stack")
 	}
 
 CacheNoHooks:
@@ -1251,7 +1251,7 @@ func (o *Stack) Delete(exec boil.Executor) (int64, error) {
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), stackPrimaryKeyMapping)
-	sql := "DELETE FROM `stacks` WHERE `id`=?"
+	sql := "DELETE FROM `stack` WHERE `id`=?"
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -1259,12 +1259,12 @@ func (o *Stack) Delete(exec boil.Executor) (int64, error) {
 	}
 	result, err := exec.Exec(sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from stacks")
+		return 0, errors.Wrap(err, "models: unable to delete from stack")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for stacks")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for stack")
 	}
 
 	if err := o.doAfterDeleteHooks(exec); err != nil {
@@ -1288,12 +1288,12 @@ func (q stackQuery) DeleteAll(exec boil.Executor) (int64, error) {
 
 	result, err := q.Query.Exec(exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from stacks")
+		return 0, errors.Wrap(err, "models: unable to delete all from stack")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for stacks")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for stack")
 	}
 
 	return rowsAff, nil
@@ -1324,7 +1324,7 @@ func (o StackSlice) DeleteAll(exec boil.Executor) (int64, error) {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `stacks` WHERE " +
+	sql := "DELETE FROM `stack` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, stackPrimaryKeyColumns, len(o))
 
 	if boil.DebugMode {
@@ -1338,7 +1338,7 @@ func (o StackSlice) DeleteAll(exec boil.Executor) (int64, error) {
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for stacks")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for stack")
 	}
 
 	if len(stackAfterDeleteHooks) != 0 {
@@ -1397,7 +1397,7 @@ func (o *StackSlice) ReloadAll(exec boil.Executor) error {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `stacks`.* FROM `stacks` WHERE " +
+	sql := "SELECT `stack`.* FROM `stack` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, stackPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1420,7 +1420,7 @@ func StackExistsG(iD uint64) (bool, error) {
 // StackExists checks if the Stack row exists.
 func StackExists(exec boil.Executor, iD uint64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `stacks` where `id`=? limit 1)"
+	sql := "select exists(select 1 from `stack` where `id`=? limit 1)"
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -1430,7 +1430,7 @@ func StackExists(exec boil.Executor, iD uint64) (bool, error) {
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if stacks exists")
+		return false, errors.Wrap(err, "models: unable to check if stack exists")
 	}
 
 	return exists, nil

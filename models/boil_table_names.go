@@ -4,23 +4,19 @@
 package models
 
 var TableNames = struct {
-	BusinessStack  string
-	Businesses     string
-	Migrations     string
-	PasswordResets string
-	StackTag       string
-	Stacks         string
-	Tags           string
-	UserBusiness   string
-	Users          string
+	Business      string
+	BusinessStack string
+	PasswordReset string
+	Stack         string
+	StackTag      string
+	Tag           string
+	User          string
 }{
-	BusinessStack:  "business_stack",
-	Businesses:     "businesses",
-	Migrations:     "migrations",
-	PasswordResets: "password_resets",
-	StackTag:       "stack_tag",
-	Stacks:         "stacks",
-	Tags:           "tags",
-	UserBusiness:   "user_business",
-	Users:          "users",
+	Business:      "business",
+	BusinessStack: "business_stack",
+	PasswordReset: "password_reset",
+	Stack:         "stack",
+	StackTag:      "stack_tag",
+	Tag:           "tag",
+	User:          "user",
 }

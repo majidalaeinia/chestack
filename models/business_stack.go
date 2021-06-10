@@ -49,52 +49,6 @@ var BusinessStackColumns = struct {
 
 // Generated where
 
-type whereHelperuint64 struct{ field string }
-
-func (w whereHelperuint64) EQ(x uint64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperuint64) NEQ(x uint64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperuint64) LT(x uint64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperuint64) LTE(x uint64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperuint64) GT(x uint64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperuint64) GTE(x uint64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperuint64) IN(slice []uint64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperuint64) NIN(slice []uint64) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-type whereHelpernull_Time struct{ field string }
-
-func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
 var BusinessStackWhere = struct {
 	ID         whereHelperuint64
 	BusinessID whereHelperuint64
@@ -407,7 +361,7 @@ func (o *BusinessStack) Business(mods ...qm.QueryMod) businessQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Businesses(queryMods...)
-	queries.SetFrom(query.Query, "`businesses`")
+	queries.SetFrom(query.Query, "`business`")
 
 	return query
 }
@@ -421,7 +375,7 @@ func (o *BusinessStack) Stack(mods ...qm.QueryMod) stackQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Stacks(queryMods...)
-	queries.SetFrom(query.Query, "`stacks`")
+	queries.SetFrom(query.Query, "`stack`")
 
 	return query
 }
@@ -468,8 +422,8 @@ func (businessStackL) LoadBusiness(e boil.Executor, singular bool, maybeBusiness
 	}
 
 	query := NewQuery(
-		qm.From(`businesses`),
-		qm.WhereIn(`businesses.id in ?`, args...),
+		qm.From(`business`),
+		qm.WhereIn(`business.id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -486,10 +440,10 @@ func (businessStackL) LoadBusiness(e boil.Executor, singular bool, maybeBusiness
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for businesses")
+		return errors.Wrap(err, "failed to close results of eager load for business")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for businesses")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for business")
 	}
 
 	if len(businessStackAfterSelectHooks) != 0 {
@@ -572,8 +526,8 @@ func (businessStackL) LoadStack(e boil.Executor, singular bool, maybeBusinessSta
 	}
 
 	query := NewQuery(
-		qm.From(`stacks`),
-		qm.WhereIn(`stacks.id in ?`, args...),
+		qm.From(`stack`),
+		qm.WhereIn(`stack.id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -590,10 +544,10 @@ func (businessStackL) LoadStack(e boil.Executor, singular bool, maybeBusinessSta
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for stacks")
+		return errors.Wrap(err, "failed to close results of eager load for stack")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stacks")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stack")
 	}
 
 	if len(businessStackAfterSelectHooks) != 0 {

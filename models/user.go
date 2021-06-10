@@ -72,27 +72,23 @@ var UserWhere = struct {
 	CreatedAt       whereHelpernull_Time
 	UpdatedAt       whereHelpernull_Time
 }{
-	ID:              whereHelperuint64{field: "`users`.`id`"},
-	Name:            whereHelperstring{field: "`users`.`name`"},
-	Email:           whereHelperstring{field: "`users`.`email`"},
-	Mobile:          whereHelperstring{field: "`users`.`mobile`"},
-	EmailVerifiedAt: whereHelpernull_Time{field: "`users`.`email_verified_at`"},
-	Password:        whereHelperstring{field: "`users`.`password`"},
-	RememberToken:   whereHelpernull_String{field: "`users`.`remember_token`"},
-	CreatedAt:       whereHelpernull_Time{field: "`users`.`created_at`"},
-	UpdatedAt:       whereHelpernull_Time{field: "`users`.`updated_at`"},
+	ID:              whereHelperuint64{field: "`user`.`id`"},
+	Name:            whereHelperstring{field: "`user`.`name`"},
+	Email:           whereHelperstring{field: "`user`.`email`"},
+	Mobile:          whereHelperstring{field: "`user`.`mobile`"},
+	EmailVerifiedAt: whereHelpernull_Time{field: "`user`.`email_verified_at`"},
+	Password:        whereHelperstring{field: "`user`.`password`"},
+	RememberToken:   whereHelpernull_String{field: "`user`.`remember_token`"},
+	CreatedAt:       whereHelpernull_Time{field: "`user`.`created_at`"},
+	UpdatedAt:       whereHelpernull_Time{field: "`user`.`updated_at`"},
 }
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-	UserBusinesses string
-}{
-	UserBusinesses: "UserBusinesses",
-}
+}{}
 
 // userR is where relationships are stored.
 type userR struct {
-	UserBusinesses UserBusinessSlice `boil:"UserBusinesses" json:"UserBusinesses" toml:"UserBusinesses" yaml:"UserBusinesses"`
 }
 
 // NewStruct creates a new relationship struct
@@ -293,7 +289,7 @@ func (q userQuery) One(exec boil.Executor) (*User, error) {
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for users")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for user")
 	}
 
 	if err := o.doAfterSelectHooks(exec); err != nil {
@@ -342,7 +338,7 @@ func (q userQuery) Count(exec boil.Executor) (int64, error) {
 
 	err := q.Query.QueryRow(exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count users rows")
+		return 0, errors.Wrap(err, "models: failed to count user rows")
 	}
 
 	return count, nil
@@ -363,195 +359,15 @@ func (q userQuery) Exists(exec boil.Executor) (bool, error) {
 
 	err := q.Query.QueryRow(exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if users exists")
+		return false, errors.Wrap(err, "models: failed to check if user exists")
 	}
 
 	return count > 0, nil
 }
 
-// UserBusinesses retrieves all the user_business's UserBusinesses with an executor.
-func (o *User) UserBusinesses(mods ...qm.QueryMod) userBusinessQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("`user_business`.`user_id`=?", o.ID),
-	)
-
-	query := UserBusinesses(queryMods...)
-	queries.SetFrom(query.Query, "`user_business`")
-
-	if len(queries.GetSelect(query.Query)) == 0 {
-		queries.SetSelect(query.Query, []string{"`user_business`.*"})
-	}
-
-	return query
-}
-
-// LoadUserBusinesses allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (userL) LoadUserBusinesses(e boil.Executor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
-	var slice []*User
-	var object *User
-
-	if singular {
-		object = maybeUser.(*User)
-	} else {
-		slice = *maybeUser.(*[]*User)
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &userR{}
-		}
-		args = append(args, object.ID)
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &userR{}
-			}
-
-			for _, a := range args {
-				if a == obj.ID {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.ID)
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`user_business`),
-		qm.WhereIn(`user_business.user_id in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.Query(e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load user_business")
-	}
-
-	var resultSlice []*UserBusiness
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice user_business")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on user_business")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_business")
-	}
-
-	if len(userBusinessAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.UserBusinesses = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &userBusinessR{}
-			}
-			foreign.R.User = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.UserID {
-				local.R.UserBusinesses = append(local.R.UserBusinesses, foreign)
-				if foreign.R == nil {
-					foreign.R = &userBusinessR{}
-				}
-				foreign.R.User = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// AddUserBusinessesG adds the given related objects to the existing relationships
-// of the user, optionally inserting them as new records.
-// Appends related to o.R.UserBusinesses.
-// Sets related.R.User appropriately.
-// Uses the global database handle.
-func (o *User) AddUserBusinessesG(insert bool, related ...*UserBusiness) error {
-	return o.AddUserBusinesses(boil.GetDB(), insert, related...)
-}
-
-// AddUserBusinesses adds the given related objects to the existing relationships
-// of the user, optionally inserting them as new records.
-// Appends related to o.R.UserBusinesses.
-// Sets related.R.User appropriately.
-func (o *User) AddUserBusinesses(exec boil.Executor, insert bool, related ...*UserBusiness) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.UserID = o.ID
-			if err = rel.Insert(exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE `user_business` SET %s WHERE %s",
-				strmangle.SetParamNames("`", "`", 0, []string{"user_id"}),
-				strmangle.WhereClause("`", "`", 0, userBusinessPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
-
-			if boil.DebugMode {
-				fmt.Fprintln(boil.DebugWriter, updateQuery)
-				fmt.Fprintln(boil.DebugWriter, values)
-			}
-			if _, err = exec.Exec(updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.UserID = o.ID
-		}
-	}
-
-	if o.R == nil {
-		o.R = &userR{
-			UserBusinesses: related,
-		}
-	} else {
-		o.R.UserBusinesses = append(o.R.UserBusinesses, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &userBusinessR{
-				User: o,
-			}
-		} else {
-			rel.R.User = o
-		}
-	}
-	return nil
-}
-
 // Users retrieves all the records using an executor.
 func Users(mods ...qm.QueryMod) userQuery {
-	mods = append(mods, qm.From("`users`"))
+	mods = append(mods, qm.From("`user`"))
 	return userQuery{NewQuery(mods...)}
 }
 
@@ -570,7 +386,7 @@ func FindUser(exec boil.Executor, iD uint64, selectCols ...string) (*User, error
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `users` where `id`=?", sel,
+		"select %s from `user` where `id`=?", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -580,7 +396,7 @@ func FindUser(exec boil.Executor, iD uint64, selectCols ...string) (*User, error
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from users")
+		return nil, errors.Wrap(err, "models: unable to select from user")
 	}
 
 	return userObj, nil
@@ -595,7 +411,7 @@ func (o *User) InsertG(columns boil.Columns) error {
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *User) Insert(exec boil.Executor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no users provided for insertion")
+		return errors.New("models: no user provided for insertion")
 	}
 
 	var err error
@@ -636,15 +452,15 @@ func (o *User) Insert(exec boil.Executor, columns boil.Columns) error {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `users` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `user` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `users` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `user` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `users` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, userPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `user` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, userPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -660,7 +476,7 @@ func (o *User) Insert(exec boil.Executor, columns boil.Columns) error {
 	result, err := exec.Exec(cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into users")
+		return errors.Wrap(err, "models: unable to insert into user")
 	}
 
 	var lastID int64
@@ -690,7 +506,7 @@ func (o *User) Insert(exec boil.Executor, columns boil.Columns) error {
 	}
 	err = exec.QueryRow(cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for users")
+		return errors.Wrap(err, "models: unable to populate default values for user")
 	}
 
 CacheNoHooks:
@@ -736,10 +552,10 @@ func (o *User) Update(exec boil.Executor, columns boil.Columns) (int64, error) {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update users, could not build whitelist")
+			return 0, errors.New("models: unable to update user, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `users` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `user` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, userPrimaryKeyColumns),
 		)
@@ -758,12 +574,12 @@ func (o *User) Update(exec boil.Executor, columns boil.Columns) (int64, error) {
 	var result sql.Result
 	result, err = exec.Exec(cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update users row")
+		return 0, errors.Wrap(err, "models: unable to update user row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for users")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for user")
 	}
 
 	if !cached {
@@ -786,12 +602,12 @@ func (q userQuery) UpdateAll(exec boil.Executor, cols M) (int64, error) {
 
 	result, err := q.Query.Exec(exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for users")
+		return 0, errors.Wrap(err, "models: unable to update all for user")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for users")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for user")
 	}
 
 	return rowsAff, nil
@@ -829,7 +645,7 @@ func (o UserSlice) UpdateAll(exec boil.Executor, cols M) (int64, error) {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `users` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `user` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, userPrimaryKeyColumns, len(o)))
 
@@ -864,7 +680,7 @@ var mySQLUserUniqueColumns = []string{
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *User) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no users provided for upsert")
+		return errors.New("models: no user provided for upsert")
 	}
 	currTime := time.Now().In(boil.GetLocation())
 
@@ -925,13 +741,13 @@ func (o *User) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Colu
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("models: unable to upsert users, could not build update column list")
+			return errors.New("models: unable to upsert user, could not build update column list")
 		}
 
 		ret = strmangle.SetComplement(ret, nzUniques)
-		cache.query = buildUpsertQueryMySQL(dialect, "`users`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`user`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `users` WHERE %s",
+			"SELECT %s FROM `user` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -962,7 +778,7 @@ func (o *User) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Colu
 	result, err := exec.Exec(cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert for users")
+		return errors.Wrap(err, "models: unable to upsert for user")
 	}
 
 	var lastID int64
@@ -985,7 +801,7 @@ func (o *User) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Colu
 
 	uniqueMap, err = queries.BindMapping(userType, userMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to retrieve unique values for users")
+		return errors.Wrap(err, "models: unable to retrieve unique values for user")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -995,7 +811,7 @@ func (o *User) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Colu
 	}
 	err = exec.QueryRow(cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for users")
+		return errors.Wrap(err, "models: unable to populate default values for user")
 	}
 
 CacheNoHooks:
@@ -1026,7 +842,7 @@ func (o *User) Delete(exec boil.Executor) (int64, error) {
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), userPrimaryKeyMapping)
-	sql := "DELETE FROM `users` WHERE `id`=?"
+	sql := "DELETE FROM `user` WHERE `id`=?"
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -1034,12 +850,12 @@ func (o *User) Delete(exec boil.Executor) (int64, error) {
 	}
 	result, err := exec.Exec(sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from users")
+		return 0, errors.Wrap(err, "models: unable to delete from user")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for users")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for user")
 	}
 
 	if err := o.doAfterDeleteHooks(exec); err != nil {
@@ -1063,12 +879,12 @@ func (q userQuery) DeleteAll(exec boil.Executor) (int64, error) {
 
 	result, err := q.Query.Exec(exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from users")
+		return 0, errors.Wrap(err, "models: unable to delete all from user")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for users")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for user")
 	}
 
 	return rowsAff, nil
@@ -1099,7 +915,7 @@ func (o UserSlice) DeleteAll(exec boil.Executor) (int64, error) {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `users` WHERE " +
+	sql := "DELETE FROM `user` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, userPrimaryKeyColumns, len(o))
 
 	if boil.DebugMode {
@@ -1113,7 +929,7 @@ func (o UserSlice) DeleteAll(exec boil.Executor) (int64, error) {
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for users")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for user")
 	}
 
 	if len(userAfterDeleteHooks) != 0 {
@@ -1172,7 +988,7 @@ func (o *UserSlice) ReloadAll(exec boil.Executor) error {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `users`.* FROM `users` WHERE " +
+	sql := "SELECT `user`.* FROM `user` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, userPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1195,7 +1011,7 @@ func UserExistsG(iD uint64) (bool, error) {
 // UserExists checks if the User row exists.
 func UserExists(exec boil.Executor, iD uint64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `users` where `id`=? limit 1)"
+	sql := "select exists(select 1 from `user` where `id`=? limit 1)"
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -1205,7 +1021,7 @@ func UserExists(exec boil.Executor, iD uint64) (bool, error) {
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if users exists")
+		return false, errors.Wrap(err, "models: unable to check if user exists")
 	}
 
 	return exists, nil

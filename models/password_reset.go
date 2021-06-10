@@ -52,10 +52,10 @@ var PasswordResetWhere = struct {
 	Token     whereHelperstring
 	CreatedAt whereHelpernull_Time
 }{
-	ID:        whereHelperuint64{field: "`password_resets`.`id`"},
-	Email:     whereHelperstring{field: "`password_resets`.`email`"},
-	Token:     whereHelperstring{field: "`password_resets`.`token`"},
-	CreatedAt: whereHelpernull_Time{field: "`password_resets`.`created_at`"},
+	ID:        whereHelperuint64{field: "`password_reset`.`id`"},
+	Email:     whereHelperstring{field: "`password_reset`.`email`"},
+	Token:     whereHelperstring{field: "`password_reset`.`token`"},
+	CreatedAt: whereHelpernull_Time{field: "`password_reset`.`created_at`"},
 }
 
 // PasswordResetRels is where relationship names are stored.
@@ -264,7 +264,7 @@ func (q passwordResetQuery) One(exec boil.Executor) (*PasswordReset, error) {
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for password_resets")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for password_reset")
 	}
 
 	if err := o.doAfterSelectHooks(exec); err != nil {
@@ -313,7 +313,7 @@ func (q passwordResetQuery) Count(exec boil.Executor) (int64, error) {
 
 	err := q.Query.QueryRow(exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count password_resets rows")
+		return 0, errors.Wrap(err, "models: failed to count password_reset rows")
 	}
 
 	return count, nil
@@ -334,7 +334,7 @@ func (q passwordResetQuery) Exists(exec boil.Executor) (bool, error) {
 
 	err := q.Query.QueryRow(exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if password_resets exists")
+		return false, errors.Wrap(err, "models: failed to check if password_reset exists")
 	}
 
 	return count > 0, nil
@@ -342,7 +342,7 @@ func (q passwordResetQuery) Exists(exec boil.Executor) (bool, error) {
 
 // PasswordResets retrieves all the records using an executor.
 func PasswordResets(mods ...qm.QueryMod) passwordResetQuery {
-	mods = append(mods, qm.From("`password_resets`"))
+	mods = append(mods, qm.From("`password_reset`"))
 	return passwordResetQuery{NewQuery(mods...)}
 }
 
@@ -361,7 +361,7 @@ func FindPasswordReset(exec boil.Executor, iD uint64, selectCols ...string) (*Pa
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `password_resets` where `id`=?", sel,
+		"select %s from `password_reset` where `id`=?", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -371,7 +371,7 @@ func FindPasswordReset(exec boil.Executor, iD uint64, selectCols ...string) (*Pa
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from password_resets")
+		return nil, errors.Wrap(err, "models: unable to select from password_reset")
 	}
 
 	return passwordResetObj, nil
@@ -386,7 +386,7 @@ func (o *PasswordReset) InsertG(columns boil.Columns) error {
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *PasswordReset) Insert(exec boil.Executor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no password_resets provided for insertion")
+		return errors.New("models: no password_reset provided for insertion")
 	}
 
 	var err error
@@ -424,15 +424,15 @@ func (o *PasswordReset) Insert(exec boil.Executor, columns boil.Columns) error {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `password_resets` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `password_reset` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `password_resets` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `password_reset` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `password_resets` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, passwordResetPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `password_reset` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, passwordResetPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -448,7 +448,7 @@ func (o *PasswordReset) Insert(exec boil.Executor, columns boil.Columns) error {
 	result, err := exec.Exec(cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into password_resets")
+		return errors.Wrap(err, "models: unable to insert into password_reset")
 	}
 
 	var lastID int64
@@ -478,7 +478,7 @@ func (o *PasswordReset) Insert(exec boil.Executor, columns boil.Columns) error {
 	}
 	err = exec.QueryRow(cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for password_resets")
+		return errors.Wrap(err, "models: unable to populate default values for password_reset")
 	}
 
 CacheNoHooks:
@@ -520,10 +520,10 @@ func (o *PasswordReset) Update(exec boil.Executor, columns boil.Columns) (int64,
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update password_resets, could not build whitelist")
+			return 0, errors.New("models: unable to update password_reset, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `password_resets` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `password_reset` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, passwordResetPrimaryKeyColumns),
 		)
@@ -542,12 +542,12 @@ func (o *PasswordReset) Update(exec boil.Executor, columns boil.Columns) (int64,
 	var result sql.Result
 	result, err = exec.Exec(cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update password_resets row")
+		return 0, errors.Wrap(err, "models: unable to update password_reset row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for password_resets")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for password_reset")
 	}
 
 	if !cached {
@@ -570,12 +570,12 @@ func (q passwordResetQuery) UpdateAll(exec boil.Executor, cols M) (int64, error)
 
 	result, err := q.Query.Exec(exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for password_resets")
+		return 0, errors.Wrap(err, "models: unable to update all for password_reset")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for password_resets")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for password_reset")
 	}
 
 	return rowsAff, nil
@@ -613,7 +613,7 @@ func (o PasswordResetSlice) UpdateAll(exec boil.Executor, cols M) (int64, error)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `password_resets` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `password_reset` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, passwordResetPrimaryKeyColumns, len(o)))
 
@@ -646,7 +646,7 @@ var mySQLPasswordResetUniqueColumns = []string{
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *PasswordReset) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no password_resets provided for upsert")
+		return errors.New("models: no password_reset provided for upsert")
 	}
 	currTime := time.Now().In(boil.GetLocation())
 
@@ -706,13 +706,13 @@ func (o *PasswordReset) Upsert(exec boil.Executor, updateColumns, insertColumns 
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("models: unable to upsert password_resets, could not build update column list")
+			return errors.New("models: unable to upsert password_reset, could not build update column list")
 		}
 
 		ret = strmangle.SetComplement(ret, nzUniques)
-		cache.query = buildUpsertQueryMySQL(dialect, "`password_resets`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`password_reset`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `password_resets` WHERE %s",
+			"SELECT %s FROM `password_reset` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -743,7 +743,7 @@ func (o *PasswordReset) Upsert(exec boil.Executor, updateColumns, insertColumns 
 	result, err := exec.Exec(cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert for password_resets")
+		return errors.Wrap(err, "models: unable to upsert for password_reset")
 	}
 
 	var lastID int64
@@ -766,7 +766,7 @@ func (o *PasswordReset) Upsert(exec boil.Executor, updateColumns, insertColumns 
 
 	uniqueMap, err = queries.BindMapping(passwordResetType, passwordResetMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to retrieve unique values for password_resets")
+		return errors.Wrap(err, "models: unable to retrieve unique values for password_reset")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -776,7 +776,7 @@ func (o *PasswordReset) Upsert(exec boil.Executor, updateColumns, insertColumns 
 	}
 	err = exec.QueryRow(cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for password_resets")
+		return errors.Wrap(err, "models: unable to populate default values for password_reset")
 	}
 
 CacheNoHooks:
@@ -807,7 +807,7 @@ func (o *PasswordReset) Delete(exec boil.Executor) (int64, error) {
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), passwordResetPrimaryKeyMapping)
-	sql := "DELETE FROM `password_resets` WHERE `id`=?"
+	sql := "DELETE FROM `password_reset` WHERE `id`=?"
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -815,12 +815,12 @@ func (o *PasswordReset) Delete(exec boil.Executor) (int64, error) {
 	}
 	result, err := exec.Exec(sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from password_resets")
+		return 0, errors.Wrap(err, "models: unable to delete from password_reset")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for password_resets")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for password_reset")
 	}
 
 	if err := o.doAfterDeleteHooks(exec); err != nil {
@@ -844,12 +844,12 @@ func (q passwordResetQuery) DeleteAll(exec boil.Executor) (int64, error) {
 
 	result, err := q.Query.Exec(exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from password_resets")
+		return 0, errors.Wrap(err, "models: unable to delete all from password_reset")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for password_resets")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for password_reset")
 	}
 
 	return rowsAff, nil
@@ -880,7 +880,7 @@ func (o PasswordResetSlice) DeleteAll(exec boil.Executor) (int64, error) {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `password_resets` WHERE " +
+	sql := "DELETE FROM `password_reset` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, passwordResetPrimaryKeyColumns, len(o))
 
 	if boil.DebugMode {
@@ -894,7 +894,7 @@ func (o PasswordResetSlice) DeleteAll(exec boil.Executor) (int64, error) {
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for password_resets")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for password_reset")
 	}
 
 	if len(passwordResetAfterDeleteHooks) != 0 {
@@ -953,7 +953,7 @@ func (o *PasswordResetSlice) ReloadAll(exec boil.Executor) error {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `password_resets`.* FROM `password_resets` WHERE " +
+	sql := "SELECT `password_reset`.* FROM `password_reset` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, passwordResetPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -976,7 +976,7 @@ func PasswordResetExistsG(iD uint64) (bool, error) {
 // PasswordResetExists checks if the PasswordReset row exists.
 func PasswordResetExists(exec boil.Executor, iD uint64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `password_resets` where `id`=? limit 1)"
+	sql := "select exists(select 1 from `password_reset` where `id`=? limit 1)"
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -986,7 +986,7 @@ func PasswordResetExists(exec boil.Executor, iD uint64) (bool, error) {
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if password_resets exists")
+		return false, errors.Wrap(err, "models: unable to check if password_reset exists")
 	}
 
 	return exists, nil

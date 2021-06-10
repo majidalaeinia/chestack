@@ -361,7 +361,7 @@ func (o *StackTag) Stack(mods ...qm.QueryMod) stackQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Stacks(queryMods...)
-	queries.SetFrom(query.Query, "`stacks`")
+	queries.SetFrom(query.Query, "`stack`")
 
 	return query
 }
@@ -375,7 +375,7 @@ func (o *StackTag) Tag(mods ...qm.QueryMod) tagQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Tags(queryMods...)
-	queries.SetFrom(query.Query, "`tags`")
+	queries.SetFrom(query.Query, "`tag`")
 
 	return query
 }
@@ -422,8 +422,8 @@ func (stackTagL) LoadStack(e boil.Executor, singular bool, maybeStackTag interfa
 	}
 
 	query := NewQuery(
-		qm.From(`stacks`),
-		qm.WhereIn(`stacks.id in ?`, args...),
+		qm.From(`stack`),
+		qm.WhereIn(`stack.id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -440,10 +440,10 @@ func (stackTagL) LoadStack(e boil.Executor, singular bool, maybeStackTag interfa
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for stacks")
+		return errors.Wrap(err, "failed to close results of eager load for stack")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stacks")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for stack")
 	}
 
 	if len(stackTagAfterSelectHooks) != 0 {
@@ -526,8 +526,8 @@ func (stackTagL) LoadTag(e boil.Executor, singular bool, maybeStackTag interface
 	}
 
 	query := NewQuery(
-		qm.From(`tags`),
-		qm.WhereIn(`tags.id in ?`, args...),
+		qm.From(`tag`),
+		qm.WhereIn(`tag.id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -544,10 +544,10 @@ func (stackTagL) LoadTag(e boil.Executor, singular bool, maybeStackTag interface
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for tags")
+		return errors.Wrap(err, "failed to close results of eager load for tag")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for tags")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for tag")
 	}
 
 	if len(stackTagAfterSelectHooks) != 0 {

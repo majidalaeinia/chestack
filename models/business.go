@@ -55,6 +55,29 @@ var BusinessColumns = struct {
 
 // Generated where
 
+type whereHelperuint64 struct{ field string }
+
+func (w whereHelperuint64) EQ(x uint64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperuint64) NEQ(x uint64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperuint64) LT(x uint64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperuint64) LTE(x uint64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperuint64) GT(x uint64) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperuint64) GTE(x uint64) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperuint64) IN(slice []uint64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperuint64) NIN(slice []uint64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
 type whereHelperstring struct{ field string }
 
 func (w whereHelperstring) EQ(x string) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
@@ -101,6 +124,29 @@ func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+type whereHelpernull_Time struct{ field string }
+
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
 var BusinessWhere = struct {
 	ID        whereHelperuint64
 	Name      whereHelperstring
@@ -110,28 +156,25 @@ var BusinessWhere = struct {
 	UpdatedAt whereHelpernull_Time
 	DeletedAt whereHelpernull_Time
 }{
-	ID:        whereHelperuint64{field: "`businesses`.`id`"},
-	Name:      whereHelperstring{field: "`businesses`.`name`"},
-	Website:   whereHelperstring{field: "`businesses`.`website`"},
-	Logo:      whereHelpernull_String{field: "`businesses`.`logo`"},
-	CreatedAt: whereHelpernull_Time{field: "`businesses`.`created_at`"},
-	UpdatedAt: whereHelpernull_Time{field: "`businesses`.`updated_at`"},
-	DeletedAt: whereHelpernull_Time{field: "`businesses`.`deleted_at`"},
+	ID:        whereHelperuint64{field: "`business`.`id`"},
+	Name:      whereHelperstring{field: "`business`.`name`"},
+	Website:   whereHelperstring{field: "`business`.`website`"},
+	Logo:      whereHelpernull_String{field: "`business`.`logo`"},
+	CreatedAt: whereHelpernull_Time{field: "`business`.`created_at`"},
+	UpdatedAt: whereHelpernull_Time{field: "`business`.`updated_at`"},
+	DeletedAt: whereHelpernull_Time{field: "`business`.`deleted_at`"},
 }
 
 // BusinessRels is where relationship names are stored.
 var BusinessRels = struct {
 	BusinessStacks string
-	UserBusinesses string
 }{
 	BusinessStacks: "BusinessStacks",
-	UserBusinesses: "UserBusinesses",
 }
 
 // businessR is where relationships are stored.
 type businessR struct {
 	BusinessStacks BusinessStackSlice `boil:"BusinessStacks" json:"BusinessStacks" toml:"BusinessStacks" yaml:"BusinessStacks"`
-	UserBusinesses UserBusinessSlice  `boil:"UserBusinesses" json:"UserBusinesses" toml:"UserBusinesses" yaml:"UserBusinesses"`
 }
 
 // NewStruct creates a new relationship struct
@@ -332,7 +375,7 @@ func (q businessQuery) One(exec boil.Executor) (*Business, error) {
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for businesses")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for business")
 	}
 
 	if err := o.doAfterSelectHooks(exec); err != nil {
@@ -381,7 +424,7 @@ func (q businessQuery) Count(exec boil.Executor) (int64, error) {
 
 	err := q.Query.QueryRow(exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count businesses rows")
+		return 0, errors.Wrap(err, "models: failed to count business rows")
 	}
 
 	return count, nil
@@ -402,7 +445,7 @@ func (q businessQuery) Exists(exec boil.Executor) (bool, error) {
 
 	err := q.Query.QueryRow(exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if businesses exists")
+		return false, errors.Wrap(err, "models: failed to check if business exists")
 	}
 
 	return count > 0, nil
@@ -424,27 +467,6 @@ func (o *Business) BusinessStacks(mods ...qm.QueryMod) businessStackQuery {
 
 	if len(queries.GetSelect(query.Query)) == 0 {
 		queries.SetSelect(query.Query, []string{"`business_stack`.*"})
-	}
-
-	return query
-}
-
-// UserBusinesses retrieves all the user_business's UserBusinesses with an executor.
-func (o *Business) UserBusinesses(mods ...qm.QueryMod) userBusinessQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("`user_business`.`business_id`=?", o.ID),
-	)
-
-	query := UserBusinesses(queryMods...)
-	queries.SetFrom(query.Query, "`user_business`")
-
-	if len(queries.GetSelect(query.Query)) == 0 {
-		queries.SetSelect(query.Query, []string{"`user_business`.*"})
 	}
 
 	return query
@@ -548,104 +570,6 @@ func (businessL) LoadBusinessStacks(e boil.Executor, singular bool, maybeBusines
 	return nil
 }
 
-// LoadUserBusinesses allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (businessL) LoadUserBusinesses(e boil.Executor, singular bool, maybeBusiness interface{}, mods queries.Applicator) error {
-	var slice []*Business
-	var object *Business
-
-	if singular {
-		object = maybeBusiness.(*Business)
-	} else {
-		slice = *maybeBusiness.(*[]*Business)
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &businessR{}
-		}
-		args = append(args, object.ID)
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &businessR{}
-			}
-
-			for _, a := range args {
-				if a == obj.ID {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.ID)
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`user_business`),
-		qm.WhereIn(`user_business.business_id in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.Query(e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load user_business")
-	}
-
-	var resultSlice []*UserBusiness
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice user_business")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on user_business")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_business")
-	}
-
-	if len(userBusinessAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.UserBusinesses = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &userBusinessR{}
-			}
-			foreign.R.Business = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.BusinessID {
-				local.R.UserBusinesses = append(local.R.UserBusinesses, foreign)
-				if foreign.R == nil {
-					foreign.R = &userBusinessR{}
-				}
-				foreign.R.Business = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
 // AddBusinessStacksG adds the given related objects to the existing relationships
 // of the business, optionally inserting them as new records.
 // Appends related to o.R.BusinessStacks.
@@ -707,70 +631,9 @@ func (o *Business) AddBusinessStacks(exec boil.Executor, insert bool, related ..
 	return nil
 }
 
-// AddUserBusinessesG adds the given related objects to the existing relationships
-// of the business, optionally inserting them as new records.
-// Appends related to o.R.UserBusinesses.
-// Sets related.R.Business appropriately.
-// Uses the global database handle.
-func (o *Business) AddUserBusinessesG(insert bool, related ...*UserBusiness) error {
-	return o.AddUserBusinesses(boil.GetDB(), insert, related...)
-}
-
-// AddUserBusinesses adds the given related objects to the existing relationships
-// of the business, optionally inserting them as new records.
-// Appends related to o.R.UserBusinesses.
-// Sets related.R.Business appropriately.
-func (o *Business) AddUserBusinesses(exec boil.Executor, insert bool, related ...*UserBusiness) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.BusinessID = o.ID
-			if err = rel.Insert(exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE `user_business` SET %s WHERE %s",
-				strmangle.SetParamNames("`", "`", 0, []string{"business_id"}),
-				strmangle.WhereClause("`", "`", 0, userBusinessPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
-
-			if boil.DebugMode {
-				fmt.Fprintln(boil.DebugWriter, updateQuery)
-				fmt.Fprintln(boil.DebugWriter, values)
-			}
-			if _, err = exec.Exec(updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.BusinessID = o.ID
-		}
-	}
-
-	if o.R == nil {
-		o.R = &businessR{
-			UserBusinesses: related,
-		}
-	} else {
-		o.R.UserBusinesses = append(o.R.UserBusinesses, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &userBusinessR{
-				Business: o,
-			}
-		} else {
-			rel.R.Business = o
-		}
-	}
-	return nil
-}
-
 // Businesses retrieves all the records using an executor.
 func Businesses(mods ...qm.QueryMod) businessQuery {
-	mods = append(mods, qm.From("`businesses`"))
+	mods = append(mods, qm.From("`business`"))
 	return businessQuery{NewQuery(mods...)}
 }
 
@@ -789,7 +652,7 @@ func FindBusiness(exec boil.Executor, iD uint64, selectCols ...string) (*Busines
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `businesses` where `id`=?", sel,
+		"select %s from `business` where `id`=?", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -799,7 +662,7 @@ func FindBusiness(exec boil.Executor, iD uint64, selectCols ...string) (*Busines
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from businesses")
+		return nil, errors.Wrap(err, "models: unable to select from business")
 	}
 
 	return businessObj, nil
@@ -814,7 +677,7 @@ func (o *Business) InsertG(columns boil.Columns) error {
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *Business) Insert(exec boil.Executor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no businesses provided for insertion")
+		return errors.New("models: no business provided for insertion")
 	}
 
 	var err error
@@ -855,15 +718,15 @@ func (o *Business) Insert(exec boil.Executor, columns boil.Columns) error {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `businesses` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `business` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `businesses` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `business` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `businesses` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, businessPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `business` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, businessPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -879,7 +742,7 @@ func (o *Business) Insert(exec boil.Executor, columns boil.Columns) error {
 	result, err := exec.Exec(cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into businesses")
+		return errors.Wrap(err, "models: unable to insert into business")
 	}
 
 	var lastID int64
@@ -909,7 +772,7 @@ func (o *Business) Insert(exec boil.Executor, columns boil.Columns) error {
 	}
 	err = exec.QueryRow(cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for businesses")
+		return errors.Wrap(err, "models: unable to populate default values for business")
 	}
 
 CacheNoHooks:
@@ -955,10 +818,10 @@ func (o *Business) Update(exec boil.Executor, columns boil.Columns) (int64, erro
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update businesses, could not build whitelist")
+			return 0, errors.New("models: unable to update business, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `businesses` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `business` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, businessPrimaryKeyColumns),
 		)
@@ -977,12 +840,12 @@ func (o *Business) Update(exec boil.Executor, columns boil.Columns) (int64, erro
 	var result sql.Result
 	result, err = exec.Exec(cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update businesses row")
+		return 0, errors.Wrap(err, "models: unable to update business row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for businesses")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for business")
 	}
 
 	if !cached {
@@ -1005,12 +868,12 @@ func (q businessQuery) UpdateAll(exec boil.Executor, cols M) (int64, error) {
 
 	result, err := q.Query.Exec(exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for businesses")
+		return 0, errors.Wrap(err, "models: unable to update all for business")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for businesses")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for business")
 	}
 
 	return rowsAff, nil
@@ -1048,7 +911,7 @@ func (o BusinessSlice) UpdateAll(exec boil.Executor, cols M) (int64, error) {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `businesses` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `business` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, businessPrimaryKeyColumns, len(o)))
 
@@ -1081,7 +944,7 @@ var mySQLBusinessUniqueColumns = []string{
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *Business) Upsert(exec boil.Executor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no businesses provided for upsert")
+		return errors.New("models: no business provided for upsert")
 	}
 	currTime := time.Now().In(boil.GetLocation())
 
@@ -1142,13 +1005,13 @@ func (o *Business) Upsert(exec boil.Executor, updateColumns, insertColumns boil.
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("models: unable to upsert businesses, could not build update column list")
+			return errors.New("models: unable to upsert business, could not build update column list")
 		}
 
 		ret = strmangle.SetComplement(ret, nzUniques)
-		cache.query = buildUpsertQueryMySQL(dialect, "`businesses`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`business`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `businesses` WHERE %s",
+			"SELECT %s FROM `business` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -1179,7 +1042,7 @@ func (o *Business) Upsert(exec boil.Executor, updateColumns, insertColumns boil.
 	result, err := exec.Exec(cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert for businesses")
+		return errors.Wrap(err, "models: unable to upsert for business")
 	}
 
 	var lastID int64
@@ -1202,7 +1065,7 @@ func (o *Business) Upsert(exec boil.Executor, updateColumns, insertColumns boil.
 
 	uniqueMap, err = queries.BindMapping(businessType, businessMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to retrieve unique values for businesses")
+		return errors.Wrap(err, "models: unable to retrieve unique values for business")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -1212,7 +1075,7 @@ func (o *Business) Upsert(exec boil.Executor, updateColumns, insertColumns boil.
 	}
 	err = exec.QueryRow(cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for businesses")
+		return errors.Wrap(err, "models: unable to populate default values for business")
 	}
 
 CacheNoHooks:
@@ -1243,7 +1106,7 @@ func (o *Business) Delete(exec boil.Executor) (int64, error) {
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), businessPrimaryKeyMapping)
-	sql := "DELETE FROM `businesses` WHERE `id`=?"
+	sql := "DELETE FROM `business` WHERE `id`=?"
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -1251,12 +1114,12 @@ func (o *Business) Delete(exec boil.Executor) (int64, error) {
 	}
 	result, err := exec.Exec(sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from businesses")
+		return 0, errors.Wrap(err, "models: unable to delete from business")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for businesses")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for business")
 	}
 
 	if err := o.doAfterDeleteHooks(exec); err != nil {
@@ -1280,12 +1143,12 @@ func (q businessQuery) DeleteAll(exec boil.Executor) (int64, error) {
 
 	result, err := q.Query.Exec(exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from businesses")
+		return 0, errors.Wrap(err, "models: unable to delete all from business")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for businesses")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for business")
 	}
 
 	return rowsAff, nil
@@ -1316,7 +1179,7 @@ func (o BusinessSlice) DeleteAll(exec boil.Executor) (int64, error) {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `businesses` WHERE " +
+	sql := "DELETE FROM `business` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, businessPrimaryKeyColumns, len(o))
 
 	if boil.DebugMode {
@@ -1330,7 +1193,7 @@ func (o BusinessSlice) DeleteAll(exec boil.Executor) (int64, error) {
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for businesses")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for business")
 	}
 
 	if len(businessAfterDeleteHooks) != 0 {
@@ -1389,7 +1252,7 @@ func (o *BusinessSlice) ReloadAll(exec boil.Executor) error {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `businesses`.* FROM `businesses` WHERE " +
+	sql := "SELECT `business`.* FROM `business` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, businessPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1412,7 +1275,7 @@ func BusinessExistsG(iD uint64) (bool, error) {
 // BusinessExists checks if the Business row exists.
 func BusinessExists(exec boil.Executor, iD uint64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `businesses` where `id`=? limit 1)"
+	sql := "select exists(select 1 from `business` where `id`=? limit 1)"
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -1422,7 +1285,7 @@ func BusinessExists(exec boil.Executor, iD uint64) (bool, error) {
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if businesses exists")
+		return false, errors.Wrap(err, "models: unable to check if business exists")
 	}
 
 	return exists, nil
