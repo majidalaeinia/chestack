@@ -81,7 +81,7 @@ func TestUserController_Create_SuccessfulResponse(t *testing.T) {
 		}
 	}(db)
 
-	router := gin.Default() // This needs to be written to init to start the gin framework
+	router := gin.Default()
 	router.POST(UsersEndpoint, new(UserController).Create)
 	gintest.SetRouter(router)
 
