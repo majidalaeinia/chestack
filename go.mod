@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/DATA-DOG/go-txdb v0.1.4
+	github.com/Valiben/gin_unit_test v0.0.0-20181205064931-674aee46d090
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gin-gonic/gin v1.7.1
 	github.com/go-playground/validator/v10 v10.6.1 // indirect
