@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/MajidAlaeinia/chestack/app/http/resources"
+	"github.com/MajidAlaeinia/chestack/models"
 	"github.com/MajidAlaeinia/chestack/modext"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
+	"log"
 	"net/http"
 )
 
@@ -28,4 +31,28 @@ func (ctrl UserController) Show(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, user)
 	return
+}
+
+type UserCreateReqBody struct {
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Mobile string `json:"mobile"`
+}
+
+func (ctrl UserController) Create(c *gin.Context) {
+	var user models.User
+	var reqBody UserCreateReqBody //TODO: Validation
+	err := c.BindJSON(&reqBody)
+	if err != nil {
+		log.Println(err)
+	}
+	user.Name = reqBody.Name
+	user.Email = reqBody.Email
+	user.Mobile = reqBody.Mobile
+	err = user.InsertG(boil.Infer())
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.JSON(http.StatusOK, user)
 }
