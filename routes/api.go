@@ -16,4 +16,5 @@ func SetRoutes(r *gin.Engine) {
 	r.GET("/users/:id", new(controllers.UserController).Show)
 	r.GET("/some/route/with/query-param/needed", new(controllers.UserController).ChuckNorris)
 	r.POST("/users", new(controllers.UserController).Create)
+	r.PUT("/users/:id", new(controllers.UserController).Update)
 }
