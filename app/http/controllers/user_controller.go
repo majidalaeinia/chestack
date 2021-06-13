@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/http"
 )
@@ -55,4 +56,22 @@ func (ctrl UserController) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
+}
+
+type UserUpdateReqBody struct {
+	Name string `json:"name"`
+}
+
+func (ctrl UserController) Update(c *gin.Context) {
+	id := cast.ToInt(c.Param("id"))
+	var reqBody UserUpdateReqBody //TODO: Validation
+	err := c.BindJSON(&reqBody)
+	user, err := models.Users(qm.Where("id = ?", id)).OneG()
+	if err != nil {
+		log.Println(err)
+	}
+	user.Name = reqBody.Name
+	user.UpdateG(boil.Infer())
+
+	c.JSON(http.StatusOK, user) //TODO: Hide redundant fields.
 }
