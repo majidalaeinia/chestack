@@ -52,7 +52,11 @@ func (ctrl UserController) Create(c *gin.Context) {
 	user.Mobile = reqBody.Mobile
 	err = user.InsertG(boil.Infer())
 	if err != nil {
-		log.Println(err)
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"status":  false,
+			"message": err.Error(),
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, user)
