@@ -45,7 +45,10 @@ func (ctrl UserController) Create(c *gin.Context) {
 	var reqBody UserCreateReqBody //TODO: Validation
 	err := c.BindJSON(&reqBody)
 	if err != nil {
-		log.Println(err)
+		c.PureJSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": err.Error(),
+		})
 	}
 	user.Name = reqBody.Name
 	user.Email = reqBody.Email
