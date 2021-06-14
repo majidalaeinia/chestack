@@ -1,12 +1,11 @@
 package controllers
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/MajidAlaeinia/chestack/app/http/resources"
 	"github.com/MajidAlaeinia/chestack/utils"
-	gintest "github.com/Valiben/gin_unit_test"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -20,7 +19,8 @@ import (
 )
 
 const (
-	UsersEndpoint = "/users"
+	UsersEndpoint         = "/users"
+	UsersNumberedEndpoint = "/users/1"
 )
 
 type SuccessfulResponse struct {
@@ -81,22 +81,73 @@ func TestUserController_Create_SuccessfulResponse(t *testing.T) {
 		}
 	}(db)
 
-	router := gin.Default()
-	router.POST(UsersEndpoint, new(UserController).Create)
-	gintest.SetRouter(router)
+	name := "aaa"
+	email := "b@c.com"
+	mobile := "09381201130"
 
-	resp := resources.User{}
-
-	name := "Name_4"
-	email := "email_4@gmail.com"
-	mobile := "09381201110"
-	reqBody := map[string]interface{}{"name": name, "email": email, "mobile": mobile}
-	err := gintest.TestHandlerUnMarshalResp("POST", UsersEndpoint, "json", reqBody, &resp)
-	if err != nil {
-		t.Fatalf("Error: %v", err)
+	reqBody := UserCreateReqBody{
+		Name:   name,
+		Email:  email,
+		Mobile: mobile,
 	}
+	jsn, _ := json.Marshal(reqBody)
 
-	assert.Equal(t, name, resp.Name)
-	assert.Equal(t, email, resp.Email)
-	assert.Equal(t, mobile, resp.Mobile)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, _ := gin.CreateTestContext(w)
+		jsn, _ := json.Marshal(reqBody)
+		r.Body = ioutil.NopCloser(bytes.NewReader(jsn))
+		c.Request = r
+		new(UserController).Create(c)
+	}))
+	defer ts.Close()
+
+	resp, err := http.Post(ts.URL, "application/json", bytes.NewBuffer(jsn))
+	if err != nil {
+		t.Fatalf("Error: %v", err.Error())
+	}
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	var sr SuccessfulResponse
+	err = json.Unmarshal(bodyBytes, &sr)
+	if err != nil {
+		t.Fatalf("Error: %v", err.Error())
+	}
+}
+
+func TestUserController_Update(t *testing.T) {
+	//db := utils.RunTxDb()
+	//defer func(db *sql.DB) {
+	//	err := db.Close()
+	//	if err != nil {
+	//		t.Fatalf("Error: %v", err)
+	//	}
+	//}(db)
+	//
+	//
+	//name := "bbb"
+	//reqBody := UserCreateReqBody{
+	//	Name:   name,
+	//}
+	//jsn, _ := json.Marshal(reqBody)
+	//
+	//ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	//	c, _ := gin.CreateTestContext(w)
+	//	jsn, _ := json.Marshal(reqBody)
+	//	r.Body = ioutil.NopCloser(bytes.NewReader(jsn))
+	//	c.Request = r
+	//	new(UserController).Update(c)
+	//}))
+	//defer ts.Close()
+	//
+	//resp, err := http.Post(ts.URL, "application/json", bytes.NewBuffer(jsn))
+	//if err != nil {
+	//	t.Fatalf("Error: %v", err.Error())
+	//}
+	//bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	//assert.Equal(t, http.StatusOK, resp.StatusCode)
+	//var sr UserUpdateReqBody
+	//err = json.Unmarshal(bodyBytes, &sr)
+	//if err != nil {
+	//	t.Fatalf("Error: %v", err.Error())
+	//}
 }
