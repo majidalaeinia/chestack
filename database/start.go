@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"github.com/MajidAlaeinia/chestack/hooks"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
@@ -25,4 +26,6 @@ func Run() {
 	}
 	//defer db.Close() //TODO
 	boil.SetDB(db)
+
+	hooks.Register()
 }
